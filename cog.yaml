@@ -1,0 +1,38 @@
+# Configuration for Cog ⚙️
+# Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
+
+build:
+  # set to true if your model requires a GPU
+  gpu: true
+  #cuda: "11.3"
+
+  # a list of ubuntu apt packages to install
+  system_packages:
+    - "aria2"
+    - "ffmpeg"
+    - "zip"
+
+  # python version in the form '3.8' or '3.8.12'
+  python_version: "3.7"
+
+  # a list of packages in the format <package-name>==<version>
+  python_packages:
+    - numpy==1.17.3
+    - tqdm==4.35.0
+    - sk-video==1.1.10
+    - torch==1.6.0
+    - opencv-python==4.1.2.30
+    - moviepy==1.0.3
+    - torchvision==0.7.0
+    - gdown==4.5.1
+
+  
+  # commands run after the environment is setup
+  run:
+    - gdown 1APIzVeI-4ZZCEuIRE1m6WYfSCaOsi_7_
+    - unzip RIFE_trained_model_v3.6.zip
+
+
+
+# predict.py defines how predictions are run on your model
+predict: "predict.py:Predictor"
