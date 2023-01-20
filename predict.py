@@ -4,17 +4,26 @@ import os
 class Predictor(BasePredictor):
     def setup(self):
         print("moving models to /src")
-        os.system("mv -v /train_log /src")
+        os.system("cp -rv /train_log/* /src/train_log")
 
     def predict(self, 
-        #video: Path = Input(description="input video"),
+        video: Path = Input(description="input video"),
         interpolation_factor: int = Input(
             description="interpolation factor. 4 means generate 4 intermediate frames for each input frame",
             default=4),
-        ) -> str:
+        ) -> Path:
         print("predict")
+        #os.system("rm /tmp/*.mp4")
         
-        #os.system(f"python3 inference_video.py --exp={interpolation_factor} --video={video}")
-        #out_path = None
-        return "hello"
+        out_path = f"/src/interpolated_{interpolation_factor}x.mp4"
+        # os.system(f"rm -rf {out_path}")
+        os.system(f"python3 inference_video.py --exp={interpolation_factor} --video=\"{str(video)}\" --output=\"{out_path}\"") 
+
+        # reencode with -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart
+
+        # os.system(f"ffmpeg -i {out_path} -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart {out_path}.")
+        os.system("ls -l /src")
+        os.system("ls -l /tmp")
+
+        return Path(out_path)
 

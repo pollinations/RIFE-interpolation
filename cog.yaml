@@ -4,7 +4,7 @@
 build:
   # set to true if your model requires a GPU
   gpu: true
-  #cuda: "11.3"
+  cuda: "11.3"
 
   # a list of ubuntu apt packages to install
   system_packages:
@@ -20,10 +20,10 @@ build:
     - numpy==1.17.3
     - tqdm==4.35.0
     - sk-video==1.1.10
-    - torch==1.6.0
+    - torch==1.13.0
     - opencv-python==4.1.2.30
     - moviepy==1.0.3
-    - torchvision==0.7.0
+    - torchvision==0.14.0
     - gdown==4.5.1
 
   
