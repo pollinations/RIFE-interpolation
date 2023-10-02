@@ -1,5 +1,6 @@
 from cog import BasePredictor, Input, Path
 import os
+import tempfile
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -12,25 +13,35 @@ class Predictor(BasePredictor):
             description="interpolation factor. 4 means generate 4 intermediate frames for each input frame",
             default=4),
         ) -> Path:
-        print("predict")
-        # os.system("rm /tmp/*.mp4")
         
-        out_path = f"/tmp/interpolated.mp4"
-        out_path_final = f"/tmp/interpolated_{interpolation_factor}x.mp4"
+        # Create unique temporary filenames
+        _, tmp_video_path = tempfile.mkstemp(suffix=".mp4")
+        _, out_path = tempfile.mkstemp(suffix=".mp4")
+        out_path_final = f"/tmp/interpolated_{interpolation_factor}x_{os.path.basename(tmp_video_path)}"
 
-        # use ffmpeg to remove duplicate frames
-        os.system(f"ffmpeg -i {str(video)} -vf mpdecimate {str(video)}_nodup.mp4")
+        try:
+            # use ffmpeg to remove duplicate frames
+            if os.system(f"ffmpeg -y -i {str(video)} -vf mpdecimate {tmp_video_path}") != 0:
+                raise RuntimeError('Error executing ffmpeg to remove duplicate frames')
+
+            if os.system(f"python3 inference_video.py --exp={interpolation_factor} --video=\"{tmp_video_path}\" --output=\"{out_path}\"") != 0:
+                raise RuntimeError('Error executing inference_video.py script')
+
+            # reencode with -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart
+            if os.system(f"ffmpeg -y -i {out_path} -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart {out_path_final}") != 0:
+                raise RuntimeError('Error re-encoding the video')
 
 
-        # os.system(f"rm -rf {out_path}")
-        os.system(f"python3 inference_video.py --exp={interpolation_factor} --video=\"{str(video)}\" --output=\"{out_path}\"") 
+        except Exception as e:
+            print(f"Error during prediction: {e}")
+            raise
 
-        # reencode with -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart
-
-        os.system(f"ffmpeg -i {out_path} -c:v libx264 -crf 20 -preset slow -vf format=yuv420p -c:a aac -movflags +faststart {out_path_final}")
-
-        os.system("ls -l /src")
-        os.system("ls -l /tmp")
-
+        finally:
+            # Cleanup temporary files
+            for path in [tmp_video_path, out_path]:
+                try:
+                    os.remove(path)
+                except Exception as e:
+                    print(f"Error cleaning up temporary file {path}: {e}")
+                    
         return Path(out_path_final)
-
